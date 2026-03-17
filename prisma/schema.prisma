@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                Int         @id @default(autoincrement())
+  email             String      @unique
+  password          String
+  name              String?
+  role              String      // admin, analyst, public, technician
+  location          String?
+  campaignsCreated  Campaign[]
+  campaignsJoined   Campaign[]  @relation("CampaignParticipants")
+  groupsCreated     Group[]
+  groupsJoined      Group[]     @relation("GroupMembers")
+  messages          Message[]
+  fundraisers       Fundraiser[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+model Sensor {
+  id          Int           @id @default(autoincrement())
+  type        String        // temperature, humidity, air_quality, etc.
+  location    String
+  lat         Float?
+  lon         Float?
+  status      String        @default("active") // active, inactive
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  data        SensorData[]
+  alerts      Alert[]
+}
+
+model SensorData {
+  id        Int      @id @default(autoincrement())
+  sensorId  Int
+  sensor    Sensor   @relation(fields: [sensorId], references: [id])
+  value     Float
+  timestamp DateTime @default(now())
+}
+
+model Alert {
+  id        Int      @id @default(autoincrement())
+  type      String   // air_pollution, temperature, etc.
+  message   String
+  sensorId  Int?
+  sensor    Sensor?  @relation(fields: [sensorId], references: [id])
+  timestamp DateTime @default(now())
+}
+
+model Campaign {
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String
+  creatorId     Int
+  creator       User     @relation(fields: [creatorId], references: [id])
+  participants  User[]   @relation("CampaignParticipants")
+  createdAt     DateTime @default(now())
+}
+
+model Group {
+  id        Int       @id @default(autoincrement())
+  name      String
+  issue     String
+  creatorId Int
+  creator   User      @relation(fields: [creatorId], references: [id])
+  members   User[]    @relation("GroupMembers")
+  messages  Message[]
+  createdAt DateTime  @default(now())
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  groupId   Int
+  group     Group    @relation(fields: [groupId], references: [id])
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Fundraiser {
+  id          Int      @id @default(autoincrement())
+  cause       String
+  description String
+  goal        Float
+  raised      Float    @default(0)
+  creatorId   Int
+  creator     User     @relation(fields: [creatorId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model News {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  source    String
+  createdAt DateTime @default(now())
+}
